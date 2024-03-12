@@ -8,6 +8,7 @@ on:
 env:
   FLEX_VERSION: '1.3.0'
   GATEWAY_NAME: 'commerce-dev'
+  ANYPOINT_HOST: 'anypoint.mulesoft.com'
   ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
   ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
   ANYPOINT_ORG: ${{ secrets.ANYPOINT_ORG }}
@@ -34,7 +35,7 @@ jobs:
 
       - name: Publish to MuleSoft Exchange
         run: | 
-          response=$(api-catalog publish-asset --host=anypoint.mulesoft.com -d catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
+          response=$(api-catalog publish-asset --host=$ANYPOINT_HOST -d catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
 
           echo "$response"
           
