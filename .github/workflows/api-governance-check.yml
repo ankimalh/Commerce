@@ -97,12 +97,6 @@ jobs:
           echo "$response"
           echo "$status_code"
 
-          # # Check if the error message exists in the response
-          # if [[ "$response" == *"Spec does not conform with Ruleset"* ]]; then
-          #   echo "Validation failed: Spec does not conform with Ruleset"
-          #   exit 1  # Exit with a non-zero code to indicate failure
-          # fi
-
           if [[ "$response" == *"Spec conforms with Ruleset"* ]]; then
             echo "OAS Validation successful: Spec conforms with Ruleset"
           else
