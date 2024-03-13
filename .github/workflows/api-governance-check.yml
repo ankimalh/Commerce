@@ -107,8 +107,20 @@ jobs:
             exit 1  # Exit with a non-zero code to indicate failure
           fi
 
-          # Run HTTPS Check   
-          # TO DO - PENDING
+          # Run Security Check   
+          
+          response=$(anypoint-cli-v4 governance api validate --client_id=$ANYPOINT_CLIENT_ID --client_secret=$ANYPOINT_CLIENT_SECRET --organization=$ANYPOINT_ORG $URL --remote-rulesets 68ef9520-24e9-4cf2-b2f5-620025690913/authentication-security-best-practices/minor/1.1/ --remote)
+          status_code=$(echo "${response: -3}") # Extracting the status code from the response
+
+          echo "$response"
+          echo "$status_code"
+
+          if [[ "$response" == *"Spec conforms with Ruleset"* ]]; then
+            echo "OAS Validation successful: Spec conforms with Ruleset"
+          else
+            echo "OAS Validation failed: Spec does not conform with Ruleset"
+            exit 1  # Exit with a non-zero code to indicate failure
+          fi
 
       - name: API Meta Check
         run: |
