@@ -101,9 +101,9 @@ jobs:
           echo "$status_code"
 
           if [[ "$response" == *"Spec conforms with Ruleset"* ]]; then
-            echo "OAS Validation successful: Spec conforms with Ruleset"
+            echo "HTTPS Validation successful: Spec conforms with Ruleset"
           else
-            echo "OAS Validation failed: Spec does not conform with Ruleset"
+            echo "HTTPS Validation failed: Spec does not conform with Ruleset"
             exit 1  # Exit with a non-zero code to indicate failure
           fi
 
@@ -116,9 +116,9 @@ jobs:
           echo "$status_code"
 
           if [[ "$response" == *"Spec conforms with Ruleset"* ]]; then
-            echo "OAS Validation successful: Spec conforms with Ruleset"
+            echo "Security Validation successful: Spec conforms with Ruleset"
           else
-            echo "OAS Validation failed: Spec does not conform with Ruleset"
+            echo "Security Validation failed: Spec does not conform with Ruleset"
             exit 1  # Exit with a non-zero code to indicate failure
           fi
 
