@@ -25,6 +25,24 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.ref }}
 
+      - name: Read Descriptor File and Extract Values
+        run: |
+          # Install PyYAML library for YAML parsing
+          pip install pyyaml
+
+          # Read the content of the descriptor file
+          descriptor_content=$(<commerce/finance/linter/v1/catalog.yaml)
+
+          # Extract values of assetId and version using Python script
+          python - <<EOF
+              import yaml
+              data = yaml.safe_load("$descriptor_content")
+              asset_id = data['projects'][0]['assetId']
+              version = data['projects'][0]['version']
+              print(f"Asset ID: {asset_id}")
+              print(f"Version: {version}")
+          EOF
+          
       - name: Install jq
         run: sudo apt-get install jq
           
