@@ -35,6 +35,18 @@ jobs:
           done
         shell: bash
 
+      - name: Set Repo Name and Target Branch
+        run: |
+          # Retrieve repository name
+          repo_name=$(basename "$GITHUB_REPOSITORY")
+          
+          # Retrieve target branch name
+          target_branch=${{ github.head_ref }}
+          
+          # Export as environment variables
+          echo "export REPO_NAME=$repo_name" >> $GITHUB_ENV
+          echo "export TARGET_BRANCH=$target_branch" >> $GITHUB_ENV
+
       - name: Read Descriptor File and Extract Values
         run: |
           # Install PyYAML library for YAML parsing
@@ -49,8 +61,12 @@ jobs:
           data = yaml.safe_load("$descriptor_content")
           asset_id = data['projects'][0]['assetId']
           version = data['projects'][0]['version']
+          apiPath = data['projects'][0]['main']
+          apiName = data['projects'][0]['apiName']
           print(asset_id)
           print(version)
+          print(main)
+          print(apiName)
           EOF
           )
           echo "Asset ID: $asset_id"
