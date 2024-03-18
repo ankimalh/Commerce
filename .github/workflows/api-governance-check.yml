@@ -4,6 +4,8 @@ on:
   pull_request:
     types:
       - opened
+    paths:
+      - 'commerce/**'
       
 env:
   FLEX_VERSION: '1.3.0'
@@ -25,23 +27,35 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.ref }}
 
+      - name: Set directory name
+        run: |
+          for file in ${{ github.event.pull_request.changed_files }}; do
+            export DIR_NAME=$(dirname "$file")
+            break  # Only need to capture the directory name of the first changed file
+          done
+        shell: bash
+
       - name: Read Descriptor File and Extract Values
         run: |
           # Install PyYAML library for YAML parsing
           pip install pyyaml
-
+      
           # Read the content of the descriptor file
-          descriptor_content=$(<commerce/finance/linter/v1/catalog.yaml)
-
+          descriptor_content=$(cat "$DIR_NAME/catalog.yaml")
+      
           # Extract values of assetId and version using Python script
-          python - <<EOF
-              import yaml
-              data = yaml.safe_load("$descriptor_content")
-              asset_id = data['projects'][0]['assetId']
-              version = data['projects'][0]['version']
-              print(f"Asset ID: {asset_id}")
-              print(f"Version: {version}")
+          asset_id=$(python - <<EOF
+          import yaml
+          data = yaml.safe_load("$descriptor_content")
+          asset_id = data['projects'][0]['assetId']
+          version = data['projects'][0]['version']
+          print(asset_id)
+          print(version)
           EOF
+          )
+          echo "Asset ID: $asset_id"
+          echo "Version: $version"
+
           
       - name: Install jq
         run: sudo apt-get install jq
@@ -53,22 +67,22 @@ jobs:
 
       - name: Publish to MuleSoft Exchange
         run: | 
-          response=$(api-catalog publish-asset --host=$ANYPOINT_HOST -d catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
+          response=$(api-catalog publish-asset --host=$ANYPOINT_HOST -d $DIR_NAME/catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
 
           echo "$response"
           
-          # Capture Asset ID
-          asset_id=$(echo "$response" | awk '/Asset ID:/ {print $NF}')
-          echo "Asset_ID: $asset_id"
-          # echo "::set-output name=asset_id::$asset_id"
+          # # Capture Asset ID
+          # asset_id=$(echo "$response" | awk '/Asset ID:/ {print $NF}')
+          # echo "Asset_ID: $asset_id"
+          # # echo "::set-output name=asset_id::$asset_id"
 
-          # Capture Version
-          version=$(echo "$response" | awk '/Version:/ {print $NF}')
-          echo "Version: $version"
-          # echo "::set-output name=version::$version"
+          # # Capture Version
+          # version=$(echo "$response" | awk '/Version:/ {print $NF}')
+          # echo "Version: $version"
+          # # echo "::set-output name=version::$version"
 
-          echo "ASSET_ID=$asset_id" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
+          # echo "ASSET_ID=$asset_id" >> $GITHUB_ENV
+          # echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Install anypoint-cli-v4 cli
         run: |
@@ -78,11 +92,11 @@ jobs:
       - name: API Governance - Open API Specification Validate
         run: |
 
-          asset_id=$ASSET_ID
-          version=$VERSION
+          # asset_id=$ASSET_ID
+          # version=$VERSION
           
-          echo "$asset_id"
-          echo "$version"
+          # echo "$asset_id"
+          # echo "$version"
 
           # Construct the URL
           URL=$ANYPOINT_ORG/$asset_id/$version
@@ -103,6 +117,20 @@ jobs:
             echo "OAS Validation failed: Spec does not conform with Ruleset"
             exit 1  # Exit with a non-zero code to indicate failure
           fi
+
+      - name: API Governance - Security Check
+        run: |
+
+          # asset_id=$ASSET_ID
+          # version=$VERSION
+          
+          # echo "$asset_id"
+          # echo "$version"
+
+          # Construct the URL
+          URL=$ANYPOINT_ORG/$asset_id/$version
+
+          echo "Constructed URL: $URL"
           
           # Run HTTPS Check
           
@@ -134,7 +162,13 @@ jobs:
             exit 1  # Exit with a non-zero code to indicate failure
           fi
 
-      - name: API Meta Check
+
+      - name: API Governance - CISCO API Style Guide Check
+        run: |
+
+          asset_id=$ASSET_ID
+
+      - name: API Meta Data Check
         run: |
 
           asset_id=$ASSET_ID
