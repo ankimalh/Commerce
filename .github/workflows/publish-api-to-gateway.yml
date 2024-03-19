@@ -34,24 +34,45 @@ jobs:
           sudo apt-get update
           npm install -g api-catalog-cli@latest
 
-      - name: Publish to MuleSoft Exchange
-        run: | 
-          response=$(api-catalog publish-asset --host=anypoint.mulesoft.com -d catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
-
-          echo "$response"
-          
-          # Capture Asset ID
-          asset_id=$(echo "$response" | awk '/Asset ID:/ {print $NF}')
-          echo "Asset_ID: $asset_id"
-          # echo "::set-output name=asset_id::$asset_id"
-
-          # Capture Version
-          version=$(echo "$response" | awk '/Version:/ {print $NF}')
+      - name: Read Descriptor File and Extract Values
+        run: |
+          # Install PyYAML library for YAML parsing
+          pip install pyyaml
+      
+          # Read the content of the descriptor file
+          descriptor_content=$(cat "$DIR_NAME/catalog.yaml")
+      
+          # Extract values of assetId and version using Python script
+          asset_id=$(python - <<EOF
+          import yaml
+          data = yaml.safe_load("$descriptor_content")
+          asset_id = data['projects'][0]['assetId']
+          version = data['projects'][0]['version']
+          print(asset_id)
+          print(version)
+          EOF
+          )
+          echo "Asset ID: $asset_id"
           echo "Version: $version"
-          # echo "::set-output name=version::$version"
 
-          echo "ASSET_ID=$asset_id" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
+      # - name: Publish to MuleSoft Exchange
+      #   run: | 
+      #     response=$(api-catalog publish-asset --host=anypoint.mulesoft.com -d catalog.yaml --organization=$ANYPOINT_ORG --client_id $ANYPOINT_CLIENT_ID --client_secret $ANYPOINT_CLIENT_SECRET)
+
+      #     echo "$response"
+          
+      #     # Capture Asset ID
+      #     asset_id=$(echo "$response" | awk '/Asset ID:/ {print $NF}')
+      #     echo "Asset_ID: $asset_id"
+      #     # echo "::set-output name=asset_id::$asset_id"
+
+      #     # Capture Version
+      #     version=$(echo "$response" | awk '/Version:/ {print $NF}')
+      #     echo "Version: $version"
+      #     # echo "::set-output name=version::$version"
+
+      #     echo "ASSET_ID=$asset_id" >> $GITHUB_ENV
+      #     echo "VERSION=$version" >> $GITHUB_ENV
 
       # - name: Install anypoint-cli-v4 cli
       #   run: |
