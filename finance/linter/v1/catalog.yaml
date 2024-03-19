@@ -1,6 +1,6 @@
 #%Catalog Descriptor 1.0
 projects:
-  - main: linter/v1/api-linter-oas-spec.json
+  - main: finance/linter/v1/api-linter-oas-spec.json
     assetId: api-linter-oas-spec
     version: 1.0.2
     apiVersion: v1
