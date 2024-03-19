@@ -202,7 +202,7 @@ jobs:
             response=$(curl --location $APIMETADATA_URL \
               --header 'Content-Type: application/json' \
               --header 'Accept: application/json' \
-              --header 'Cookie: _abck=384C2F4A177824E9EB92F91B1F5EE153~-1~YAAQRRAgFzpK3i6OAQAAgh8IQwvrdLrpnhpmI/l4ExYvTmEETy5pIJq5S853ECN1EGWMN7NuqI0Bcl2GAbhffUcxAkpJEYgbioah7BU5+EEadkrpZXIzNZU6nupY1cBlUK7jbcEBrraN1GKjiUbq+ElRvVBaaVeDPyV8dL+cWeuQGcZKM5d8na32Y04EvXE3dPZaUam3BGDL7K8sbtIl0C7yrZEPo60+6GPix1lg/dCZsFrHS2Q5EpB5MZL2XF9wM4V89JLPFrO1WuhYlx7Cug7FIyrvRqiee/4BoUiLZZnHq5DFx6wi1OVlm83lpZcLLjiS2w/68W9HY7bxoCk2EvAEs69THx2JwLGRGcGJIokAHFA85sElkHp2aniaDJOOICWhKpe8~-1~-1~-1' \
+              --header "Authorization: Bearer $login_response" \
               --data '{
                 "domain": {
                   "domainName": "<string>",
