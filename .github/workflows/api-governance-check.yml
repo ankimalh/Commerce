@@ -48,6 +48,11 @@ jobs:
           echo "export REPO_NAME=$repo_name" >> $GITHUB_ENV
           echo "export TARGET_BRANCH=$target_branch" >> $GITHUB_ENV
 
+      - name: Set Repo Name and Target Branch
+        run: |
+          # Retrieve repository name
+          repo_name=$(basename "$GITHUB_REPOSITORY")
+
       - name: Read Descriptor File and Extract Values
         run: |
           # Install PyYAML library for YAML parsing
