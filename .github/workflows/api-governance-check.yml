@@ -11,6 +11,7 @@ env:
   FLEX_VERSION: '1.3.0'
   GATEWAY_NAME: 'commerce-dev'
   ANYPOINT_HOST: 'anypoint.mulesoft.com'
+  APIMETADATA_URL: 'https://api.cisco.com/domain_tbd/sub_domain_tbd/endpoint_tbd/validate-domain'
   ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
   ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
   ANYPOINT_ORG: ${{ secrets.ANYPOINT_ORG }}
@@ -184,8 +185,61 @@ jobs:
 
           asset_id=$ASSET_ID
 
-      - name: API Meta Data Check
+      - name: OAuth2 login
         run: |
+          response=$(curl -s -w "%{http_code}" --location --request POST 'https://int-id.cisco.com/oauth2/default/v1/token' -o 'login-response' \
+                    --header 'Content-Type: application/json' \
+                    --data-raw '{"grant_type": "client_credentials", "client_id": "${{ secrets.OAUTH_CLIENT_ID }}", "client_secret": "${{ secrets.OAUTH_CLIENT_SECRET }}"}')
+          status_code=$(echo "${response: -3}") # Extracting the status code from the response
 
-          asset_id=$ASSET_ID
-          version=$VERSION    
+          if [ $status_code -gt 399 ]; then
+            echo "Anypoint login failed"
+            exit 1
+          fi
+
+          - name: Call API Meta Data Check and Handle Response
+          run: |
+            response=$(curl --location $APIMETADATA_URL \
+              --header 'Content-Type: application/json' \
+              --header 'Accept: application/json' \
+              --header 'Cookie: _abck=384C2F4A177824E9EB92F91B1F5EE153~-1~YAAQRRAgFzpK3i6OAQAAgh8IQwvrdLrpnhpmI/l4ExYvTmEETy5pIJq5S853ECN1EGWMN7NuqI0Bcl2GAbhffUcxAkpJEYgbioah7BU5+EEadkrpZXIzNZU6nupY1cBlUK7jbcEBrraN1GKjiUbq+ElRvVBaaVeDPyV8dL+cWeuQGcZKM5d8na32Y04EvXE3dPZaUam3BGDL7K8sbtIl0C7yrZEPo60+6GPix1lg/dCZsFrHS2Q5EpB5MZL2XF9wM4V89JLPFrO1WuhYlx7Cug7FIyrvRqiee/4BoUiLZZnHq5DFx6wi1OVlm83lpZcLLjiS2w/68W9HY7bxoCk2EvAEs69THx2JwLGRGcGJIokAHFA85sElkHp2aniaDJOOICWhKpe8~-1~-1~-1' \
+              --data '{
+                "domain": {
+                  "domainName": "<string>",
+                  "domainGitRepo": "<string>",
+                  "domainGitBranch": "<string>"
+                },
+                "apis": [
+                  {
+                    "apiPath": "<string>",
+                    "apiName": "<string>",
+                    "apiVersion": "<string>",
+                    "apiGateway": "<string>",
+                    "apiGatewayServers": [
+                      {
+                        "lifecycle": "<string>",
+                        "server": "<string>"
+                      },
+                      {
+                        "lifecycle": "<string>",
+                        "server": "<string>"
+                      }
+                    ],
+                    "apiId": "<string>",
+                    "action": "PUBLISH"
+                  }
+                ]
+              }')
+        
+            # Extract status from response JSON
+            status=$(echo "$response" | jq -r '.status')
+        
+            # Check if status is SUCCESS or FAILURE
+            if [ "$status" = "SUCCESS" ]; then
+              echo "API call successful!"
+            else
+              echo "API call failed!"
+              errors=$(echo "$response" | jq -r '.errors | @csv')
+              echo "Errors: $errors"
+            fi
+  
