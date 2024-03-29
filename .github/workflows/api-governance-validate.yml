@@ -1,4 +1,4 @@
-name: API Governance Check
+name: PR Information and API Call
 
 on:
   pull_request:
@@ -15,10 +15,10 @@ jobs:
       - name: Extract information
         id: extract_info
         run: |
-          echo "::set-output name=repository_name::${GITHUB_REPOSITORY}"
-          echo "::set-output name=target_branch_name::${GITHUB_REF}"
-          echo "::set-output name=repository_url::${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
-          echo "::set-output name=pull_request_number::${{ github.event.pull_request.number }}"
+          echo "REPOSITORY_NAME=${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+          echo "TARGET_BRANCH_NAME=${GITHUB_REF}" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+          echo "PULL_REQUEST_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
 
       - name: Get OAuth token
         id: get_token
@@ -29,15 +29,15 @@ jobs:
           # Make a request to your token service to obtain a token
           # Replace 'https://example.com/token' with your actual token service endpoint
           TOKEN=$(curl -X POST -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" https://example.com/token)
-          echo "::set-output name=token::$(echo $TOKEN | jq -r '.access_token')"
+          echo "TOKEN=$(echo $TOKEN | jq -r '.access_token')" >> $GITHUB_ENV
 
       - name: Call API
         env:
-          REPOSITORY_NAME: ${{ steps.extract_info.outputs.repository_name }}
-          TARGET_BRANCH_NAME: ${{ steps.extract_info.outputs.target_branch_name }}
-          REPOSITORY_URL: ${{ steps.extract_info.outputs.repository_url }}
-          PULL_REQUEST_NUMBER: ${{ steps.extract_info.outputs.pull_request_number }}
-          TOKEN: ${{ steps.get_token.outputs.token }}
+          REPOSITORY_NAME: ${{ env.REPOSITORY_NAME }}
+          TARGET_BRANCH_NAME: ${{ env.TARGET_BRANCH_NAME }}
+          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+          PULL_REQUEST_NUMBER: ${{ env.PULL_REQUEST_NUMBER }}
+          TOKEN: ${{ env.TOKEN }}
         run: |
           # Construct JSON payload
           JSON_PAYLOAD="{\"repository_name\":\"${REPOSITORY_NAME}\",\"target_branch_name\":\"${TARGET_BRANCH_NAME}\",\"repository_url\":\"${REPOSITORY_URL}\",\"pull_request_number\":\"${PULL_REQUEST_NUMBER}\"}"
