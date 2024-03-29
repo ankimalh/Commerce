@@ -3,8 +3,6 @@ name: PR Information and API Call
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    # paths:
-    #   - 'commerce/finance/**'
 
 jobs:
   collect-info-and-call-api:
@@ -18,10 +16,10 @@ jobs:
         id: extract_info
         run: |
           REPO_NAME=$(basename ${GITHUB_REPOSITORY})
+          REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
           echo "REPOSITORY_NAME=${REPO_NAME}" >> $GITHUB_ENV
           echo "TARGET_BRANCH_NAME=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
-          echo "REPOSITORY_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> $GITHUB_ENV
-          # echo "REPOSITORY_URL=${REPO_URL}" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=${REPO_URL}" >> $GITHUB_ENV
           echo "PULL_REQUEST_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
 
       - name: Get OAuth token
@@ -36,6 +34,7 @@ jobs:
           echo "TOKEN=$(echo $TOKEN | jq -r '.access_token')" >> $GITHUB_ENV
 
       - name: Call API
+        id: call_api
         env:
           REPOSITORY_NAME: ${{ env.REPOSITORY_NAME }}
           TARGET_BRANCH_NAME: ${{ env.TARGET_BRANCH_NAME }}
@@ -44,8 +43,14 @@ jobs:
           TOKEN: ${{ env.TOKEN }}
         run: |
           # Construct JSON payload
-          JSON_PAYLOAD="{\"repository_name\":\"${REPOSITORY_NAME}\",\"target_branch_name\":\"${TARGET_BRANCH_NAME}\",\"repository_url\":\"${REPOSITORY_URL}\",\"pull_request_number\":\"${PULL_REQUEST_NUMBER}\"}"
+          JSON_PAYLOAD="{\"domainName\":\"${REPOSITORY_NAME}\",\"domainGitRepo\":\"${REPOSITORY_URL}\",\"domainTargetGitBranch\":\"${TARGET_BRANCH_NAME}\",\"prNumber\":\"${PULL_REQUEST_NUMBER}\"}"
           
           # Assuming your API endpoint is https://example.com/api
           # Replace 'Bearer <token>' with your actual token
-          curl -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" https://example.com/api
+          API_RESPONSE=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" https://example.com/api)
+          echo "::set-output name=status::$(echo $API_RESPONSE | jq -r '.status')"
+          echo "::set-output name=trace_id::$(echo $API_RESPONSE | jq -r '.traceId')"
+          if [ "$(echo $API_RESPONSE | jq -r '.status')" == "ERROR" ]; then
+            echo "::error::API call failed with errors: $(echo $API_RESPONSE | jq -r '.errors | join(", ")')"
+            exit 1
+          fi
