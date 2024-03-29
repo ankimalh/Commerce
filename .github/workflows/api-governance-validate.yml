@@ -20,8 +20,8 @@ jobs:
           REPO_NAME=$(basename ${GITHUB_REPOSITORY})
           echo "REPOSITORY_NAME=${REPO_NAME}" >> $GITHUB_ENV
           echo "TARGET_BRANCH_NAME=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
-          # echo "REPOSITORY_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> $GITHUB_ENV
-          echo "REPOSITORY_URL=${REPO_URL}" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+          # echo "REPOSITORY_URL=${REPO_URL}" >> $GITHUB_ENV
           echo "PULL_REQUEST_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
 
       - name: Get OAuth token
