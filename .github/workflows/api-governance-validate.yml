@@ -1,0 +1,47 @@
+name: API Governance Check
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  collect-info-and-call-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Extract information
+        id: extract_info
+        run: |
+          echo "::set-output name=repository_name::${GITHUB_REPOSITORY}"
+          echo "::set-output name=target_branch_name::${GITHUB_REF}"
+          echo "::set-output name=repository_url::${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          echo "::set-output name=pull_request_number::${{ github.event.pull_request.number }}"
+
+      - name: Get OAuth token
+        id: get_token
+        run: |
+          CLIENT_ID="your_client_id"
+          CLIENT_SECRET="your_client_secret"
+          
+          # Make a request to your token service to obtain a token
+          # Replace 'https://example.com/token' with your actual token service endpoint
+          TOKEN=$(curl -X POST -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" https://example.com/token)
+          echo "::set-output name=token::$(echo $TOKEN | jq -r '.access_token')"
+
+      - name: Call API
+        env:
+          REPOSITORY_NAME: ${{ steps.extract_info.outputs.repository_name }}
+          TARGET_BRANCH_NAME: ${{ steps.extract_info.outputs.target_branch_name }}
+          REPOSITORY_URL: ${{ steps.extract_info.outputs.repository_url }}
+          PULL_REQUEST_NUMBER: ${{ steps.extract_info.outputs.pull_request_number }}
+          TOKEN: ${{ steps.get_token.outputs.token }}
+        run: |
+          # Construct JSON payload
+          JSON_PAYLOAD="{\"repository_name\":\"${REPOSITORY_NAME}\",\"target_branch_name\":\"${TARGET_BRANCH_NAME}\",\"repository_url\":\"${REPOSITORY_URL}\",\"pull_request_number\":\"${PULL_REQUEST_NUMBER}\"}"
+          
+          # Assuming your API endpoint is https://example.com/api
+          # Replace 'Bearer <token>' with your actual token
+          curl -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" https://example.com/api
