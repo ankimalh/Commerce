@@ -3,8 +3,8 @@ name: PR Information and API Call
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    paths:
-      - 'commerce/finance/**'
+    # paths:
+    #   - 'commerce/finance/**'
 
 jobs:
   collect-info-and-call-api:
