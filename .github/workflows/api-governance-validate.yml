@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
-      - 'commerce/**'
+      - 'commerce/finance/**'
 
 jobs:
   collect-info-and-call-api:
