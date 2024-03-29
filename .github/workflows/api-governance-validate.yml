@@ -5,8 +5,8 @@ on:
     types: [opened, reopened, synchronize]
 
 env:
-  ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
-  ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
+  CLIENT_ID: ${{ secrets.SERVICE_CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.SERVICE_CLIENT_SECRET }}
 
 
 jobs:
@@ -30,13 +30,14 @@ jobs:
       - name: Get OAuth token
         id: get_token
         run: |
-          CLIENT_ID="${ANYPOINT_CLIENT_ID}"
-          CLIENT_SECRET="${ANYPOINT_CLIENT_SECRET}"
-          
           # Make a request to your token service to obtain a token
-          # Replace 'https://example.com/token' with your actual token service endpoint
-          TOKEN=$(curl -X POST -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" https://example.com/token)
+          TOKEN=$(curl -X POST -u "${CLIENT_ID}:${CLIENT_SECRET}" -d "grant_type=client_credentials" https://int-id.cisco.com/oauth2/default/v1/token)
+          if [ $? -ne 0 ]; then
+            echo "Failed to obtain OAuth token."
+            exit 1
+          fi
           echo "TOKEN=$(echo $TOKEN | jq -r '.access_token')" >> $GITHUB_ENV
+
 
       - name: Call API
         id: call_api
@@ -50,9 +51,8 @@ jobs:
           # Construct JSON payload
           JSON_PAYLOAD="{\"domainName\":\"${REPOSITORY_NAME}\",\"domainGitRepo\":\"${REPOSITORY_URL}\",\"domainTargetGitBranch\":\"${TARGET_BRANCH_NAME}\",\"prNumber\":\"${PULL_REQUEST_NUMBER}\"}"
           
-          # Assuming your API endpoint is https://example.com/api
           # Replace 'Bearer <token>' with your actual token
-          API_RESPONSE=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" https://example.com/api)
+          API_RESPONSE=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" https://commerce-dev.cisco.com/api/v2/dv1/api/pull_request/)
           echo "::set-output name=status::$(echo $API_RESPONSE | jq -r '.status')"
           echo "::set-output name=trace_id::$(echo $API_RESPONSE | jq -r '.traceId')"
           if [ "$(echo $API_RESPONSE | jq -r '.status')" == "ERROR" ]; then
