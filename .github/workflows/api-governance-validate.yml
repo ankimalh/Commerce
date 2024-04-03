@@ -3,6 +3,10 @@ name: PR Information and API Call
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    branches:
+      - develop
+      - test
+      - main
 
 env:
   CLIENT_ID: ${{ secrets.SERVICE_CLIENT_ID }}
